@@ -5,6 +5,8 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask_session import Session
 from sqlite3 import connect
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 import os
 
 
