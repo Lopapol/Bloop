@@ -1,0 +1,11 @@
+{%extends "base.html"%}
+
+{%block title%}
+Недостаточная длина
+{%endblock%}
+{%block body%}
+
+<h1 align="center">Неверное составление статьи</h1>
+<h2 align="center">Длина статьи должна быть не меньше {{len}}</h2>
+<h3 align="center">Попробуйте <a href="/article/create-article">заново</a></h3>>
+{%endblock%}

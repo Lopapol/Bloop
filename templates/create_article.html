@@ -1,0 +1,18 @@
+{%extends "base.html"%}
+
+{%block title%}
+Публикация статьи
+{%endblock%}
+{%block body%}
+<div class="container mt-5">
+    <h1>Создание статьи</h1><br>
+    <form method="POST">
+        <input type="text" name="title" class="form-control" placeholder="Название статьи" required><br>
+        <textarea name="intro" id="intro" class="form-control" placeholder="Интро статьи" rows="3" required></textarea><br>
+        <textarea name="txt" id="txt" class="form-control" placeholder="Основной текст"  rows="13" required></textarea><br>
+        <input type="file" id="photo" name="files[]" multiple class="form-control" ><br>
+        <input type="submit" class="btn btn-primary"  value='Опубликовать'>
+    </form>
+
+</div>
+{%endblock%}
