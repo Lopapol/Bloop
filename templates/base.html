@@ -9,7 +9,7 @@
     <title>{% block title %}{% endblock %}</title>
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
       <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
+        <img src="/static/photo/bloops.png" alt="За стеклом" width="32" height="32">
         <span class="fs-4">Bloop</span>
       </a>
 
@@ -17,11 +17,12 @@
         <li class="nav-item"><a href="/" class="nav-link">Главная страница</a></li>
         <li class="nav-item"><a href="/articles" class="nav-link">Статьи</a></li>
         <li class="nav-item"><a href="/login" class="nav-link">Профиль</a></li>
-        <li class="nav-item"><a href="/article/create-article" class="nav-link active" aria-current="page">Создать статью</a></li>
+        <button class="btn btn-primary mx-2" onclick="location.href='/article/create-article';">Создать статью</button>
       </ul>
     </header>
 </head>
 <body>
+
     {% block body %}
     {% endblock %}
 </body>

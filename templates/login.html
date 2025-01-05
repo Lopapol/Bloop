@@ -3,19 +3,38 @@
 {%block title%}
 Вход
 {%endblock%}
+
 {%block body%}
-<form method="POST">
-    <div class="container">
-        <label for="username"><b>Логин</b></label>
-        <input type="text" placeholder="" name="username" required>
-        <label for="password"><b>Пароль</b></label>
-        <input type="password" placeholder="" name="password" required>
-        <button type="submit">Войти</button>
+
+<body>
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-6 mx-auto">
+
+            <h1 class="text-center">Вход в систему</h1><br>
+            {% for message in get_flashed_messages() %}
+            <div class="alert alert-danger text-center">{{ message }}</div>
+            {% endfor %}
+            <form class="form" method="POST">
+                <div class="form-group">
+                    <label for="login">Логин</label>
+                    <input type="text" class="form-control" id="login"  name='login' placeholder="Введите ваш логин/email">
+                </div><br>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Введите ваш пароль">
+                </div>
+                <br>
+                <div class="form-group">
+                    <input type="submit" class="btn btn-primary">
+                </div>
+                </form>
+                <div class="form-group">
+                    <p class="text-center">Забыли пароль? <a href="#">Забыли пароль?</a></p>
+                </div>
+
+        </div>
     </div>
-    <div class="container">
-        <span class=" reg">
-            <a href="/register">Регистрация</a>
-        </span>
-    </div>
-</form>
+</div>
 {%endblock%}
