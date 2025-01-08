@@ -1,0 +1,11 @@
+{%extends "base.html"%}
+
+{%block title%}
+Недостаточно прав
+{%endblock%}
+
+{%block body%}
+<h1 align="center">У вас недостаточно полномочий чтобы редактировать или удалять эту статью, или она еще не создана</h1>
+<a href="/article/create-article">{{want}}</a>
+
+{%endblock%}

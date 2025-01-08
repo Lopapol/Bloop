@@ -19,20 +19,26 @@
             <form class="form" method="POST">
                 <div class="form-group">
                     <label for="login">Логин</label>
-                    <input type="text" class="form-control" id="login"  name='login' placeholder="Введите ваш логин/email">
-                </div><br>
-                <div class="form-group">
-                    <label for="password">Пароль</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Введите ваш пароль">
+                    <input type="text" class="form-control" id="login" name='login'
+                           placeholder="Введите ваш логин/email">
                 </div>
                 <br>
                 <div class="form-group">
-                    <input type="submit" class="btn btn-primary">
+                    <label for="password">Пароль</label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Введите ваш пароль">
                 </div>
-                </form>
+                <br>
                 <div class="form-group">
-                    <p class="text-center">Забыли пароль? <a href="#">Забыли пароль?</a></p>
+                    <input type="submit" class="btn btn-primary" value="Войти">
                 </div>
+            </form>
+            <div class="form-group">
+                <p class="text-center"><a href="/forgot-password">Забыли пароль?</a></p>
+            </div>
+            <div class="form-group">
+                <p class="text-center"><a href="/register">Зарегистрироваться</a></p>
+            </div>
 
         </div>
     </div>
