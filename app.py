@@ -27,6 +27,7 @@ app.config['SESSION_COOKIE_DOMAIN'] = None
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(weeks=1)
+Session(app)
 app.secret_key = 'lKjO7!6xH2NG3zY4'
 app.config['MAIL_SERVER'] = 'smtp.yandex.ru'
 app.config['MAIL_PORT'] = 465
@@ -35,7 +36,6 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = 'Bloopbloop2025@yandex.ru'
 app.config['MAIL_DEFAULT_SENDER'] = 'Bloopbloop2025@yandex.ru'
 app.config['MAIL_PASSWORD'] = 'xhlaplrirfjjjtci'
-Session(app)
 mail = Mail(app)
 
 
@@ -109,7 +109,7 @@ def create_article():
         cursor = base.cursor()
         cursor.execute('INSERT INTO articles (author,title, introtext, txt, datepublishing) VALUES (?, ?, ?, ?, ?)',
                        (session['user_id'], title, intro, text, datetime.utcnow()))
-        if len(text)-text.count(' ')-text.count(' ') < 70:
+        if len(text) - text.count(' ') - text.count(' ') < 70:
             flash('Длина текста не может быть меньше 70 символов(не считая пробелов)')
             return render_template('create_article.html')
         elif len(title) != title.count(' ') and len(intro) != intro.count(' ') and len(text) != text.count(
@@ -148,7 +148,7 @@ def home():
 
 @app.route('/test/code')
 def test_code():
-    return render_template("Mail_code.html", code='FF')
+    return render_template("Mail_code.html", code='777')
 
 
 @app.route('/file/test', methods=["POST", "GET"])
@@ -187,9 +187,8 @@ def article(id):
     date = results[0][4]
     connection.close()
 
-    if int(author)==int(session['user_id']):
-
-        return render_template('article_adm.html', title=title, intro=intro, text=txt, author=author, date=date,id=id)
+    if int(author) == int(session['user_id']):
+        return render_template('article_adm.html', title=title, intro=intro, text=txt, author=author, date=date, id=id)
     return render_template('article.html', title=title, intro=intro, text=txt, author=author, date=date)
 
 
@@ -271,7 +270,6 @@ def profile(id):
         if not about:
             about = ''
 
-
         if int(session['user_id']) != int(id):
             return render_template('profile.html', public_name=publicname, about=about, username=username, articles=res)
         else:
@@ -338,7 +336,7 @@ def confirm(id):
         cursor.execute("SELECT mail,confirm FROM Users WHERE id=?", (id,))
         mail_date_code = cursor.fetchone()
         cursor.execute("SELECT sended FROM Users WHERE id=?", (id,))
-        if mail_date_code[1]=='True':
+        if mail_date_code[1] == 'True':
             flash('Аккаунт уже подтвержден')
             return redirect('/profile')
         if cursor.fetchone()[0] == 'True':
@@ -400,6 +398,7 @@ def mail_test():
 def error_ror():
     return render_template('unexcept_error.html')
 
+
 @app.route('/delete/<id>', methods=['POST', 'GET'])
 def delete(id):
     if request.method == 'GET':
@@ -409,11 +408,11 @@ def delete(id):
         author = cursor.fetchone()
         if not author:
             if check_auth():
-                return render_template('no_rights.html',want='Если хотите, вы всегда можете ее создать')
-            return render_template('no_rights.html',want='')
-        if int(author[0])!=int(session['user_id']):
+                return render_template('no_rights.html', want='Если хотите, вы всегда можете ее создать')
+            return render_template('no_rights.html', want='')
+        if int(author[0]) != int(session['user_id']):
             return render_template('no_rights.html')
-        return render_template('confidence.html',id=id)
+        return render_template('confidence.html', id=id)
     elif request.method == 'POST':
         connection = connect('acc.db')
         cursor = connection.cursor()
@@ -421,10 +420,10 @@ def delete(id):
         result = cursor.fetchone()
         if not result:
             return render_template('no_rights.html')
-        conf=request.form['confident']
+        conf = request.form['confident']
         print(conf)
-        if conf=="True":
-            base=connect('acc.db')
+        if conf == "True":
+            base = connect('acc.db')
             cursor = base.cursor()
             cursor.execute("DELETE FROM Articles WHERE ID = ?", (id,))
             base.commit()
@@ -432,12 +431,18 @@ def delete(id):
             return redirect('/profile')
         else:
             return redirect('/profile')
+
+
 @app.route('/test/conf')
 def test_conf():
     return render_template('confidence.html')
+
+
 @app.route('/test/editing')
 def test_editing():
     return render_template('redct.html')
+
+
 @app.route('/editing/<id>', methods=['POST', 'GET'])
 def editing(id):
     if request.method == 'GET':
@@ -448,29 +453,30 @@ def editing(id):
         connection.close()
         if not result:
             return redirect('/error')
-        result=result
+        result = result
         print(result)
-        title=result[2]
-        intro=result[3]
-        text=result[4]
-        if int(result[1])!=int(session['user_id']):
+        title = result[2]
+        intro = result[3]
+        text = result[4]
+        if int(result[1]) != int(session['user_id']):
             return render_template('no_rights.html')
-        return render_template('redct.html',title=title,intro=intro,textarea=text,id=id)
+        return render_template('redct.html', title=title, intro=intro, textarea=text, id=id)
     elif request.method == 'POST':
         connection = connect('acc.db')
         cursor = connection.cursor()
-        title=request.form['title']
-        intro=request.form['intro']
-        text=request.form['txt']
+        title = request.form['title']
+        intro = request.form['intro']
+        text = request.form['txt']
         cursor.execute("SELECT title,Introtext,txt  FROM Articles WHERE id=?", (id,))
         result = cursor.fetchone()
-        if result[0]==title and result[1]==intro and result[2]==text:
+        if result[0] == title and result[1] == intro and result[2] == text:
             flash('Ничего не изменилось😅')
-            return render_template('redct.html',title=title,intro=intro,textarea=text,id=id)
-        cursor.execute("UPDATE Articles SET Title=?,introtext=?,txt=?,datepublishing=?  WHERE id=?", (title,intro,text,datetime.utcnow(),id))
+            return render_template('redct.html', title=title, intro=intro, textarea=text, id=id)
+        cursor.execute("UPDATE Articles SET Title=?,introtext=?,txt=?,datepublishing=?  WHERE id=?",
+                       (title, intro, text, datetime.utcnow(), id))
         if len(text) - text.count(' ') - text.count(' ') < 70:
             flash('Длина текста не может быть меньше 70 символов(не считая пробелов)')
-            return render_template('redct.html',title=title,intro=intro,textarea=text,id=id)
+            return render_template('redct.html', title=title, intro=intro, textarea=text, id=id)
         elif len(title) != title.count(' ') and len(intro) != intro.count(' ') and len(text) != text.count(
                 ' ') and title != ' ' and intro != ' ' and text != ' ':
             connection.commit()
@@ -483,9 +489,11 @@ def all_articles():
     connection = connect('acc.db')
     cursor = connection.cursor()
     cursor.execute("SELECT *  FROM Articles ORDER BY id DESC")
-    sessio=str(check_auth())
-    return render_template('all_articles.html',articles=cursor.fetchall(),session=sessio,idenf=int(session["user_id"]))
+    sessio = str(check_auth())
+    return render_template('all_articles.html', articles=cursor.fetchall(), session=sessio,
+                           idenf=int(session["user_id"]))
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+# але суки юбилейная строчка🥳🥳🥳🥳🥳🥂🥂🥂🥂🥂🥂🎄🎄🎄🎄🎄🎆🎆🎆🎆🎆🎆
