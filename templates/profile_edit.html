@@ -13,6 +13,7 @@
     {% for message in get_flashed_messages() %}
     <div class="alert alert-danger text-center">{{ message }}</div>
     {% endfor %}
+    <a class="btn btn-danger" href="/logout">Выйти из профиля</a>
     <hr>
     {%for art in articles%}
     <div class="alert alert-info">

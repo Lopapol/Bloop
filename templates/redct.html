@@ -1,11 +1,11 @@
 {%extends "base.html"%}
 
 {%block title%}
-Редактирование
+Редактирование статьи
 {%endblock%}
 {%block body%}
-<div class="container mt-5">
-    <h1>Создание статьи</h1><br>
+<div class="container">
+    <h1>Редактирование статьи</h1><br>
     {% for message in get_flashed_messages() %}
     <div class="alert alert-danger text-center">{{ message }}</div>
     {% endfor %}

@@ -49,9 +49,6 @@ def send_mail(subject, sender, recipients, html_body):
     mail.send(msg)
 
 
-def allowed_file(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 
 def hash(password):
@@ -195,7 +192,6 @@ def article(id):
 @app.route('/login', methods=["POST", "GET"])
 def login():
     if request.method == 'POST':
-
         login = request.form['login']
         password = hash(request.form['password'])
         if login.count(' ') + login.count(' ') == len(login) or password.count(' ') + password.count(' ') == len(
@@ -204,20 +200,21 @@ def login():
 
         connection = connect('acc.db')
         cursor = connection.cursor()
-        cursor.execute("SELECT password,id,confirm FROM Users WHERE username=?", (login,))
+        cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE username=?", (login,))
         results = cursor.fetchall()
-
-        if results == []:
-            cursor.execute("SELECT password,id,confirm FROM Users WHERE mail=?", (login,))
+        if not results:
+            cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE mail=?", (login,))
             results = cursor.fetchall()
-
         if not results:
             flash('Такого пользователя не существует, вам необходимо зарегистрироваться')
             return render_template('login.html')
+        id=results[0][1]
         if results[0][2] != "True":
+            if check_delta(results[0][3], id):
+                flash('Время на подтверждение вышло')
+                return redirect('/register')
             flash('Учетная запись не подтверждена, ссылка для подтверждения уже на вашей почте, наверное...😅😅')
             return render_template('login.html')
-
         if password == results[0][0]:
             session['logged_in'] = True
             session['user_id'] = results[0][1]
@@ -302,13 +299,18 @@ def register():
             flash("Пользователь с таким логином уже существует")
             connection.close()
             return render_template('register.html', value_login=login, value_password=password, value_email=email)
-
         connection.close()
         connection = connect('acc.db')
         cursor = connection.cursor()
         cursor.execute("SELECT ID FROM Users WHERE mail=?", (email,))
         if cursor.fetchone():
             flash("Пользователь с такой электронной почтой уже существует")
+            return render_template('register.html', value_login=login, value_password=password, value_email=email)
+        if len(password)-password.count(' ')-password.count(' ')!=len(password):
+            flash("В пароле нельзя использовать пробелы")
+            return render_template('register.html', value_login=login, value_email=email)
+        if len(password)<8:
+            flash("Длина пароля не может быть меньше 8 символов")
             return render_template('register.html', value_login=login, value_password=password, value_email=email)
         connection = connect('acc.db')
         cursor = connection.cursor()
@@ -319,7 +321,6 @@ def register():
         cursor.execute("SELECT ID FROM Users WHERE username=?", (login,))
         id = cursor.fetchone()[0]
         connection.close()
-
         return redirect('/confirm/' + str(id))
     else:
         if check_auth():
@@ -336,11 +337,14 @@ def confirm(id):
         cursor.execute("SELECT mail,confirm FROM Users WHERE id=?", (id,))
         mail_date_code = cursor.fetchone()
         cursor.execute("SELECT sended FROM Users WHERE id=?", (id,))
-        if mail_date_code[1] == 'True':
-            flash('Аккаунт уже подтвержден')
-            return redirect('/profile')
-        if cursor.fetchone()[0] == 'True':
-            return render_template('confirm.html')
+        try:
+            if mail_date_code[1] == 'True':
+                flash('Аккаунт уже подтвержден')
+                return redirect('/profile')
+            if cursor.fetchone()[0] == 'True':
+                return render_template('confirm.html')
+        except:
+            return redirect('/error')
         if mail_date_code:
             mailie = str(mail_date_code[0])
             codie = str(mail_date_code[1])
@@ -495,6 +499,5 @@ def all_articles():
 
 
 if __name__ == "__main__":
-    pass
     app.run(debug=True)
 # але суки юбилейная строчка🥳🥳🥳🥳🥳🥂🥂🥂🥂🥂🥂🎄🎄🎄🎄🎄🎆🎆🎆🎆🎆🎆

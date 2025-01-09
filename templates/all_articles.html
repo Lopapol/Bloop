@@ -5,7 +5,7 @@
 {%endblock%}
 {%block body%}
 <div class="container">
-    <h1 align="center">Статьи, опубликованные на сайте</h1>
+    <h1 align="center">Статьи, опубликованные на сайте</h1><br>
     {%if session == 'True'%}
     <h4>Вы всегда можете <a href="/article/create-article">создать свою статью</a> и она появится тут</h4>
     {% else %}
@@ -21,8 +21,7 @@
         {%if art[1]==idenf%}
         <a class="btn btn-warning" href="/editing/{{art[0]}}">Редактировать</a>
         <a class="btn btn-danger" href="/delete/{{art[0]}}">Удалить</a>
-        {%else%}
-        <h1>error(</h1>
+
 
         {%endif%}
 
