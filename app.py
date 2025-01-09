@@ -49,8 +49,6 @@ def send_mail(subject, sender, recipients, html_body):
     mail.send(msg)
 
 
-
-
 def hash(password):
     salt = hashlib.sha256(b"hashlib").digest()
     hashed_password = hashlib.sha256(f"{salt}{password}".encode()).digest()
@@ -75,14 +73,14 @@ def random_code(l):
     return str(s)
 
 
-def check_delta(t1, id):
+def check_delta(t1, user_id):
     date1 = datetime.strptime(t1, '%Y-%m-%d %H:%M:%S.%f')
-    date2 = datetime.strptime(str(datetime.utcnow()), '%Y-%m-%d %H:%M:%S.%f')
-    raz = abs(date1 - date2).total_seconds()
-    if raz >= 600:
+    date2 = datetime.utcnow()
+    diff = (date2 - date1).total_seconds()
+    if diff >= 600:
         base = connect('acc.db')
         cursor = base.cursor()
-        cursor.execute("DELETE FROM Users WHERE ID = ?", (id,))
+        cursor.execute("DELETE FROM Users WHERE ID = ?", (user_id,))
         base.commit()
         return True
     return False
@@ -145,7 +143,7 @@ def home():
 
 @app.route('/test/code')
 def test_code():
-    return render_template("Mail_code.html", code='777')
+    return render_template("mail_code.html", code='777')
 
 
 @app.route('/file/test', methods=["POST", "GET"])
@@ -193,22 +191,19 @@ def article(id):
 def login():
     if request.method == 'POST':
         login = request.form['login']
-        password = hash(request.form['password'])
-        if login.count(' ') + login.count(' ') == len(login) or password.count(' ') + password.count(' ') == len(
-                password):
+        password = request.form['password']
+        if is_empty(login) or is_empty(password):
             return render_template('login.html')
+        password = hash(password)
 
         connection = connect('acc.db')
         cursor = connection.cursor()
-        cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE username=?", (login,))
+        cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE username=:1 or mail=:1", (login,))
         results = cursor.fetchall()
-        if not results:
-            cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE mail=?", (login,))
-            results = cursor.fetchall()
         if not results:
             flash('Такого пользователя не существует, вам необходимо зарегистрироваться')
             return render_template('login.html')
-        id=results[0][1]
+        id = results[0][1]
         if results[0][2] != "True":
             if check_delta(results[0][3], id):
                 flash('Время на подтверждение вышло')
@@ -226,6 +221,10 @@ def login():
             return redirect('/profile')
         else:
             return render_template('login.html')
+
+
+def is_empty(text):
+    return text.count(' ') + text.count(' ') == len(text)
 
 
 @app.route('/logout')
@@ -251,7 +250,7 @@ def profile(id):
     results = cursor.fetchall()
     if not results:
         if check_auth():
-            return render_template('unfind_profile.html', pre='')
+            return render_template('unfind_profile.html')
         else:
             return render_template('unfind_profile.html', pre='Самое время его создать')
     username = results[0][1]
@@ -262,15 +261,15 @@ def profile(id):
         res = ''
 
     about = results[0][3]
-    publicname = results[0][5]
+    public_name = results[0][5]
     if results[0][6] == "True":
         if not about:
             about = ''
 
         if int(session['user_id']) != int(id):
-            return render_template('profile.html', public_name=publicname, about=about, username=username, articles=res)
+            return render_template('profile.html', public_name=public_name, about=about, username=username, articles=res)
         else:
-            return render_template('profile_edit.html', public_name=publicname, about=about, username=username,
+            return render_template('profile_edit.html', public_name=public_name, about=about, username=username,
                                    articles=res)
     else:
         return render_template('unfind_profile.html')
@@ -285,8 +284,7 @@ def register():
         password = request.form['password']
         password2 = request.form['password2']
         email = request.form['email']
-        if login.count(' ') + login.count(' ') == len(login) or password.count(' ') + password.count(' ') == len(
-                password) or email.count(' ') + email.count(' ') == len(email):
+        if is_empty(login) or is_empty(password) or is_empty(email):
             flash('Поля не могут быть пустыми')
             return render_template('register.html', value_login=login, value_password=password, value_email=email)
         if password != password2:
@@ -299,20 +297,18 @@ def register():
             flash("Пользователь с таким логином уже существует")
             connection.close()
             return render_template('register.html', value_login=login, value_password=password, value_email=email)
-        connection.close()
-        connection = connect('acc.db')
         cursor = connection.cursor()
         cursor.execute("SELECT ID FROM Users WHERE mail=?", (email,))
         if cursor.fetchone():
             flash("Пользователь с такой электронной почтой уже существует")
             return render_template('register.html', value_login=login, value_password=password, value_email=email)
-        if len(password)-password.count(' ')-password.count(' ')!=len(password):
+
+        if password.count(' ') > 0 or password.count(' ') > 0:
             flash("В пароле нельзя использовать пробелы")
             return render_template('register.html', value_login=login, value_email=email)
-        if len(password)<8:
+        if len(password) < 8:
             flash("Длина пароля не может быть меньше 8 символов")
             return render_template('register.html', value_login=login, value_password=password, value_email=email)
-        connection = connect('acc.db')
         cursor = connection.cursor()
         cursor.execute(
             'INSERT INTO Users (username, password, mail, publicname, confirm,date_reg,sended) VALUES (?, ?, ?, ?, ?,?,?)',
@@ -336,20 +332,20 @@ def confirm(id):
         cursor = connection.cursor()
         cursor.execute("SELECT mail,confirm FROM Users WHERE id=?", (id,))
         mail_date_code = cursor.fetchone()
-        cursor.execute("SELECT sended FROM Users WHERE id=?", (id,))
-        try:
-            if mail_date_code[1] == 'True':
-                flash('Аккаунт уже подтвержден')
-                return redirect('/profile')
-            if cursor.fetchone()[0] == 'True':
-                return render_template('confirm.html')
-        except:
+        if not mail_date_code:
             return redirect('/error')
+
+        if mail_date_code[1] == 'True':
+            flash('Аккаунт уже подтвержден')
+            return redirect('/profile')
+        cursor.execute("SELECT sended FROM Users WHERE id=?", (id,))
+        if cursor.fetchone()[0] == 'True':
+            return render_template('confirm.html')
+
         if mail_date_code:
             mailie = str(mail_date_code[0])
-            codie = str(mail_date_code[1])
-            send_mail('Подтверждение регистрации', 'Bloopbloop2025@yandex.ru', [mailie],
-                      render_template('Mail_code.html', code=str(mail_date_code[1])))
+            send_mail('Подтверждение регистрации', app.config['MAIL_USERNAME'], [mailie],
+                      render_template('mail_code.html', code=str(mail_date_code[1])))
             cursor.execute("UPDATE Users SET sended=? WHERE id=?", ("True", id))
             connection.commit()
             connection.close()
@@ -371,7 +367,7 @@ def confirm(id):
         if not result:
             return redirect('/error')
 
-        if code.count(' ') + code.count(' ') == len(code):
+        if is_empty(code):
             flash('Код не может быть пустым')
             return render_template('confirm.html')
         if code == result[0]:
@@ -394,7 +390,7 @@ def confirm(id):
 @app.route('/test/mail')
 def mail_test():
     send_mail('Подтверждение регистрации', 'Bloopbloop2025@yandex.ru', ['maxim.zlygostev@gmail.com'],
-              render_template('Mail_code.html', code=2))
+              render_template('mail_code.html', code=2))
     return 'Success'
 
 
@@ -500,4 +496,3 @@ def all_articles():
 
 if __name__ == "__main__":
     app.run(debug=True)
-# але суки юбилейная строчка🥳🥳🥳🥳🥳🥂🥂🥂🥂🥂🥂🎄🎄🎄🎄🎄🎆🎆🎆🎆🎆🎆
