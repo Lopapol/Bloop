@@ -11,7 +11,6 @@ from werkzeug.utils import secure_filename
 from flask_session import Session
 
 app = Flask(__name__)
-allowed_extensions = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = '/loaded'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////C:/Users/Max/PycharmProjects/Projecy/acc.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
