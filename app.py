@@ -6,9 +6,9 @@ from sqlite3 import connect
 from flask import Flask, render_template, request, redirect, session, flash
 from flask_mail import Mail, Message
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.utils import secure_filename
 
 from flask_session import Session
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/loaded'
@@ -17,16 +17,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'lKjO7!6xH2NG3zY4'
 app.config['MAX_CONTENT_PATH'] = 1024 ** 2 * 5
 db = SQLAlchemy(app)
+
 app.config['SESSION_PERMANENT'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(weeks=1)
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = False
 app.config['SESSION_COOKIE_NAME'] = 'session'
-app.config['MAIL_DEBUG'] = app.debug
 app.config['SESSION_COOKIE_DOMAIN'] = None
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(weeks=1)
+
 Session(app)
+
 app.secret_key = 'lKjO7!6xH2NG3zY4'
 app.config['MAIL_SERVER'] = 'smtp.yandex.ru'
 app.config['MAIL_PORT'] = 465
@@ -35,6 +37,7 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = 'Bloopbloop2025@yandex.ru'
 app.config['MAIL_DEFAULT_SENDER'] = 'Bloopbloop2025@yandex.ru'
 app.config['MAIL_PASSWORD'] = 'xhlaplrirfjjjtci'
+app.config['MAIL_DEBUG'] = app.debug
 mail = Mail(app)
 
 
@@ -61,6 +64,8 @@ def check_auth():
         return False
 
 
+
+
 def good_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
@@ -68,7 +73,7 @@ def good_file(filename):
 def random_code(l):
     s = ''
     for i in range(l):
-        s += str(random.choice(['G', 'R', 'B', 'Y', '1', '2', '3', '4', '5', '6', '7', '8', '9']))
+        s += str(random.choice(['G', 'R', 'B', 'Y', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']))
     return str(s)
 
 
@@ -81,6 +86,23 @@ def check_delta(t1, user_id):
         cursor = base.cursor()
         cursor.execute("DELETE FROM Users WHERE ID = ?", (user_id,))
         base.commit()
+        return True
+    return False
+
+
+def is_empty(text):
+    return text.count(' ') + text.count(' ') == len(text)
+
+
+def is_valid(id):
+    connection = connect('acc.db')
+    cursor = connection.cursor()
+    cursor.execute("SELECT confirm FROM Users WHERE ID = ?", (id,))
+    result = cursor.fetchone()
+    connection.close()
+    if not result:
+        return False
+    elif result[0] == 'True':
         return True
     return False
 
@@ -126,8 +148,8 @@ def article_success():
     cursor = connection.cursor()
     last_article_query = "SELECT * FROM Articles ORDER BY ID DESC LIMIT 1;"
     cursor.execute(last_article_query)
-    article = cursor.fetchone()
-    return render_template('article_success.html', name='/article/' + str(article[0]))
+    article_get = cursor.fetchone()
+    return render_template('article_success.html', name='/article/' + str(article_get[0]))
 
 
 @app.errorhandler(404)
@@ -143,17 +165,6 @@ def home():
 @app.route('/test/code')
 def test_code():
     return render_template("mail_code.html", code='777')
-
-
-@app.route('/file/test', methods=["POST", "GET"])
-def file_test():
-    if request.method == 'POST':  # 1488
-        file = request.files['file']
-
-        filename = secure_filename(file.filename)
-        file.save('/static/photo')
-    else:
-        return render_template("file_test.html")
 
 
 @app.route('/article/public_error')
@@ -192,12 +203,13 @@ def login():
         login = request.form['login']
         password = request.form['password']
         if is_empty(login) or is_empty(password):
+            flash('Поля не могут быть пустыми')
             return render_template('login.html')
         password = hash(password)
-
         connection = connect('acc.db')
         cursor = connection.cursor()
-        cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE username=:1 or mail=:1", (login,))
+        cursor.execute("SELECT password,id,confirm,date_reg FROM Users WHERE username=:1 or mail=:1",
+                       (login,))
         results = cursor.fetchall()
         if not results:
             flash('Такого пользователя не существует, вам необходимо зарегистрироваться')
@@ -213,17 +225,14 @@ def login():
             session['logged_in'] = True
             session['user_id'] = results[0][1]
             return redirect('/profile')
-        flash("Неверный логин или пароль")
-        return redirect('/profile')
+        else:
+            flash("Неверный логин или пароль")
+            return redirect('/profile')
     else:
         if check_auth():
             return redirect('/profile')
         else:
             return render_template('login.html')
-
-
-def is_empty(text):
-    return text.count(' ') + text.count(' ') == len(text)
 
 
 @app.route('/logout')
@@ -255,21 +264,20 @@ def profile(id):
     username = results[0][1]
     cursor.execute("SELECT * FROM Articles WHERE author=?", (id,))
     res = cursor.fetchall()
-
     if not res:
         res = ''
-
     about = results[0][3]
     public_name = results[0][5]
+    id = results[0][0]
     if results[0][6] == "True":
         if not about:
             about = ''
-
         if int(session['user_id']) != int(id):
-            return render_template('profile.html', public_name=public_name, about=about, username=username, articles=res)
+            return render_template('profile.html', public_name=public_name,
+            about=about, username=username, articles=res, empty=is_empty(about))
         else:
-            return render_template('profile_edit.html', public_name=public_name, about=about, username=username,
-                                   articles=res)
+            return render_template('profile_edit.html', public_name=public_name,
+            about=about, username=username, articles=res, id=id, empty=is_empty(about))
     else:
         return render_template('unfind_profile.html')
 
@@ -333,14 +341,12 @@ def confirm(id):
         mail_date_code = cursor.fetchone()
         if not mail_date_code:
             return redirect('/error')
-
         if mail_date_code[1] == 'True':
             flash('Аккаунт уже подтвержден')
             return redirect('/profile')
         cursor.execute("SELECT sended FROM Users WHERE id=?", (id,))
         if cursor.fetchone()[0] == 'True':
             return render_template('confirm.html')
-
         if mail_date_code:
             mailie = str(mail_date_code[0])
             send_mail('Подтверждение регистрации', app.config['MAIL_USERNAME'], [mailie],
@@ -362,10 +368,8 @@ def confirm(id):
             return redirect('/register')
         connection.close()
         code = request.form['code']
-
         if not result:
             return redirect('/error')
-
         if is_empty(code):
             flash('Код не может быть пустым')
             return render_template('confirm.html')
@@ -379,7 +383,6 @@ def confirm(id):
             flash('Вы успешно зарегистрированы')
             return redirect('/profile')
         elif code != result[0]:
-
             flash('Код неверный')
             return render_template('confirm.html')
         else:
@@ -476,11 +479,57 @@ def editing(id):
         if len(text) - text.count(' ') - text.count(' ') < 70:
             flash('Длина текста не может быть меньше 70 символов(не считая пробелов)')
             return render_template('redct.html', title=title, intro=intro, textarea=text, id=id)
-        elif len(title) != title.count(' ') and len(intro) != intro.count(' ') and len(text) != text.count(
-                ' ') and title != ' ' and intro != ' ' and text != ' ':
+        elif not (is_empty(title) or is_empty(intro) or is_empty(text)):
             connection.commit()
             connection.close()
             return redirect('/article/success')
+        flash('Поля не могут быть пустыми')
+        return render_template('redct.html', title=title, intro=intro, textarea=text, id=id)
+
+
+@app.route('/edit/profile/<id>', methods=['POST', 'GET'])
+def edit_profile(id):
+    if request.method == 'GET':
+        if not check_auth():
+            flash('Для этого необходимо войти')
+            return redirect('/login')
+        connection = connect('acc.db')
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM Users WHERE id=?", (id,))
+        result = cursor.fetchone()
+        if not is_valid(id) or not result or int(session['user_id']) != int(result[0]):
+            return redirect('/error')
+        about_value = result[3]
+        if str(about_value) == str(None):
+            about_value = 'Я  _'
+        return render_template('profile_editing.html', id=id, data=result, about_value=about_value,
+                               public_value=result[5])
+    elif request.method == 'POST':
+        if not check_auth():
+            flash('Для этого необходимо войти')
+            return redirect('/login')
+        public_name = request.form['public']
+        about = request.form['about']
+        if is_empty(public_name):
+            flash("Имя не может быть пустым")
+            return render_template('profile_editing.html', about_value=about)
+        connection = connect('acc.db')
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM Users WHERE id=?", (id,))
+        result = cursor.fetchone()
+        if about == 'Я _':
+            about = ''
+        if public_name == result[5] and about == result[3]:
+            flash('Ничего не изменилось')
+            return render_template('profile_editing.html', about_value=about, public_value=public_name)
+        cursor.execute("UPDATE Users SET publicname=?,about=? WHERE id=?", (public_name, about, id))
+        connection.commit()
+        connection.close()
+        return redirect('/profile')
+
+
+    else:
+        return redirect('/error')
 
 
 @app.route('/articles')
@@ -488,9 +537,9 @@ def all_articles():
     connection = connect('acc.db')
     cursor = connection.cursor()
     cursor.execute("SELECT *  FROM Articles ORDER BY id DESC")
-    sessio = str(check_auth())
-    return render_template('all_articles.html', articles=cursor.fetchall(), session=sessio,
-                           idenf=int(session["user_id"]))
+    session_1 = str(check_auth())
+    return render_template('all_articles.html',
+                           articles=cursor.fetchall(), session=session_1, idenf=int(session["user_id"]))
 
 
 if __name__ == "__main__":

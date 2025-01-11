@@ -9,13 +9,17 @@
 <div class="container">
     <h1>{{public_name}}</h1><br>
     <h3>О пользоваетеле</h3>
+    {%if is_empty(about)%}
+    <h4>Этот пользователь пока что не добавил описание о себе</h4>
+    {%else%}
     <h4>{{about}}</h4>
+    {endif}
     {% for message in get_flashed_messages() %}
     <div class="alert alert-danger text-center">{{ message }}</div>
     {% endfor %}
     <hr>
-    {%for art in articles%}
 
+    {%for art in articles%}
     <div class="alert alert-info">
         <h2>{{art[2]}}</h2>
         {{art[3]}}

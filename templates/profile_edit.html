@@ -1,18 +1,21 @@
 {%extends "base.html"%}
-
 {%block title%}
 {{public_name}}
 {%endblock%}
-
 {%block body%}
 <br>
 <div class="container">
     <h1>{{public_name}}</h1><br>
-    <h3>О пользоваетеле</h3>
+    <h3>О пользователе</h3>
+    {%if empty %}
+    <h4>Ты еще не добавил описание о себе, а мог сделать это <a href="/edit/profile/{{id}}">тут</a></h4>
+    {%else%}
     <h4>{{about}}</h4>
+    {% endif %}
     {% for message in get_flashed_messages() %}
     <div class="alert alert-primary text-center">{{ message }}</div>
-    {% endfor %}
+    {%endfor%}
+    <a class="btn btn-warning" href="/edit/profile/{{id}}">Редактировать профиль</a>
     <a class="btn btn-danger" href="/logout">Выйти из профиля</a>
     <hr>
     {%for art in articles%}
@@ -25,6 +28,7 @@
         <a class="btn btn-danger" href="/delete/{{art[0]}}">Удалить</a>
     </div>
     {%endfor%}
-
 </div>
 {%endblock%}
+
+

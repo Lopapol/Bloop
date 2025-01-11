@@ -1,0 +1,23 @@
+{%extends "base.html"%}
+
+{%block title%}
+Редактирование профиля
+{%endblock%}
+
+{%block body%}
+
+<div class="container">
+    <h1 align="center">Редактирование профиля</h1>
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-danger text-center">{{ message }}</div>
+    {%endfor%}
+    <form method="POST">
+      <label>Публичное имя(не логин)
+        <input type="text" name="public" class="form-control" placeholder="Публичное имя(не логин)" required value="{{public_value}}">
+       </label><br>
+      <label for="about">Описание о себе</label><textarea name="about" id="about" class="form-control" placeholder="Описание о себе" rows="3"
+                                           required>{{about_value}}</textarea><br>
+      <input type="submit" class="btn btn-primary" value='Изменить'>
+    </form>
+</div>
+{%endblock%}
