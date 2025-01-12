@@ -422,7 +422,7 @@ def delete(id):
         if not result:
             return render_template('no_rights.html')
         conf = request.form['confident']
-        print(conf)
+
         if conf == "True":
             base = connect('acc.db')
             cursor = base.cursor()
@@ -455,7 +455,6 @@ def editing(id):
         if not result:
             return redirect('/error')
         result = result
-        print(result)
         title = result[2]
         intro = result[3]
         text = result[4]
