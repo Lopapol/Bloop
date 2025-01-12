@@ -22,7 +22,7 @@
     {%for art in articles%}
     <div class="alert alert-info">
         <h2>{{art[2]}}</h2>
-        {{art[3]}}
+        <pre>{{art[3]}}</pre>
         <p align="right"><b>{{art[5][0:10]}}</b></p>
         <a href="/article/{{art[0]}}" class="btn btn-primary">Подробнее</a>
     </div>

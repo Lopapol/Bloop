@@ -17,7 +17,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'lKjO7!6xH2NG3zY4'
 app.config['MAX_CONTENT_PATH'] = 1024 ** 2 * 5
 db = SQLAlchemy(app)
-
 app.config['SESSION_PERMANENT'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(weeks=1)
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -526,8 +525,6 @@ def edit_profile(id):
         connection.commit()
         connection.close()
         return redirect('/profile')
-
-
     else:
         return redirect('/error')
 
@@ -538,9 +535,12 @@ def all_articles():
     cursor = connection.cursor()
     cursor.execute("SELECT *  FROM Articles ORDER BY id DESC")
     session_1 = str(check_auth())
-    return render_template('all_articles.html',
-                           articles=cursor.fetchall(), session=session_1, idenf=int(session["user_id"]))
+    try:
+        idenf=session['user_id']
+    except:
+        idenf=0
+    return render_template('all_articles.html',articles=cursor.fetchall(), session=session_1, idenf=int(idenf))
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
