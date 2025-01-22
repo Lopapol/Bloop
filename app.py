@@ -63,7 +63,14 @@ def check_auth():
         return False
 
 
-
+def check_admin():
+    try:
+        if session['user_id']==5:
+            return True
+        else:
+            return False
+    except:
+        return False
 
 def good_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -539,6 +546,12 @@ def all_articles():
     except:
         idenf=0
     return render_template('all_articles.html',articles=cursor.fetchall(), session=session_1, idenf=int(idenf))
+
+@app.route('/test_map')
+def test_map():
+    if not check_admin():
+        return redirect('/404')
+    return render_template('test_map')
 
 
 if __name__ == "__main__":
